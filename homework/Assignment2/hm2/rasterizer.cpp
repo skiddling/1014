@@ -40,10 +40,12 @@ auto to_vec4(const Eigen::Vector3f& v3, float w = 1.0f)
 }
 
 
-static bool insideTriangle(int x, int y, const Vector3f* _v)
+// static bool insideTriangle(int x, int y, const Vector3f* _v)
+static bool insideTriangle(double x, double y, const Vector3f* _v)
 {   
     // TODO : Implement this function to check if the point (x, y) is inside the triangle represented by _v[0], _v[1], _v[2]
-    Vector2f p(x + 0.5, y + 0.5);
+    // Vector2f p(x + 0.5, y + 0.5);
+    Vector2f p(x, y);
 
     Vector2f AB(_v[1].x() - _v[0].x(), _v[1].y() - _v[0].y());
     Vector2f BC(_v[2].x() - _v[1].x(), _v[2].y() - _v[1].y());
@@ -59,9 +61,9 @@ static bool insideTriangle(int x, int y, const Vector3f* _v)
     // Vector2f BP = p - _v[1].head(2);
     // Vector2f CP = p - _v[2].head(2);
      
-    return AP.x() * AB.x() + AP.y() * AB.y() > 0 &&
-           BP.x() * BC.x() + BP.y() * BC.y() > 0 &&
-           CP.x() * CA.x() + CP.y() * CA.y() > 0;
+    return -AP.x() * AB.y() + AP.y() * AB.x() > 0 &&
+           -BP.x() * BC.y() + BP.y() * BC.x() > 0 &&
+           -CP.x() * CA.y() + CP.y() * CA.x() > 0;
     // return AP[0] * AB[0] + AP[1] * AB[1] > 0 &&
     //        AP[0] * BC[0] + AP[1] * BC[1] > 0 &&
     //        AP[0] * CA[0] + AP[1] * CA[1] > 0;
@@ -136,17 +138,17 @@ void rst::rasterizer::rasterize_triangle(const Triangle& t) {
     // iterate through the pixel and find if the current pixel is inside the triangle
     for(auto x = x_l; x <= x_r; x++){
         for(auto y = y_d; y <= y_u; y++){
-            if(insideTriangle(x, y, t.v)){
+            if(insideTriangle(x+0.5, y+0.5, t.v)){
                 // std::cout << "x, y", x, y;
                 auto[alpha, beta, gamma] = computeBarycentric2D(x, y, t.v);
                 float w_reciprocal = 1.0/(alpha / v[0].w() + beta / v[1].w() + gamma / v[2].w());
                 float z_interpolated = alpha * v[0].z() / v[0].w() + beta * v[1].z() / v[1].w() + gamma * v[2].z() / v[2].w();
                 z_interpolated *= w_reciprocal;
-                if(depth_buf[get_index(x, y)] > z_interpolated){
+                if(depth_buf[get_index(x, y)] >= z_interpolated){
+                    depth_buf[get_index(x, y)] = z_interpolated; 
                     Vector3f color = t.getColor();
                     Vector3f point(3);
                     point << (float)x, (float)y, z_interpolated;
-                    depth_buf[get_index(x, y)] = z_interpolated; 
                     set_pixel(point, color);
                 }
             }
