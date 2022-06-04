@@ -9,16 +9,16 @@ constexpr double MY_PI = 3.1415926;
 
 Eigen::Matrix4f get_view_matrix(Eigen::Vector3f eye_pos)
 {
-    Eigen::Matrix4f view = Eigen::Matrix4f::Identity();
+ Eigen::Matrix4f translate;
+    translate << 1, 0, 0, -eye_pos[0], 0, 1, 0, -eye_pos[1], 0, 0, 1,
+        -eye_pos[2], 0, 0, 0, 1;
 
-    Eigen::Matrix4f translate;
-    translate << 1,0,0,-eye_pos[0],
-                 0,1,0,-eye_pos[1],
-                 0,0,1,-eye_pos[2],
-                 0,0,0,1;
-
-    view = translate*view;
-
+    Eigen::Matrix4f rotation;
+    rotation << 1, 0, 0, 0,
+                0, 1, 0, 0,
+                0, 0, -1, 0,
+                0, 0, 0, 1;
+    Eigen::Matrix4f view = rotation * translate;
     return view;
 }
 
